@@ -1,0 +1,37 @@
+version: '1.0.{build}'
+image: Visual Studio 2017
+branches:
+  only:
+  - master
+init:
+  # Good practise, because Windows line endings are different from Unix/Linux ones
+  - cmd: git config --global core.autocrlf true
+install:
+  # Install repo specific stuff here
+before_build:
+  # Display .NET Core version
+  - cmd: dotnet --version
+  # Display minimal restore text
+  - cmd: dotnet restore ./KC.Ricochet/KC.Ricochet.csproj --verbosity m
+build_script:
+  # output will be in ./KC.Ricochet/bin/Release/netstandard2.0/
+  - cmd: dotnet build -c Release ./KC.Ricochet/KC.Ricochet.csproj
+after_build:
+  # For once the build has completed
+artifacts:
+ - path: './KC.Ricochet/bin/Release/*.nupkg'
+   name: NuGet
+clone_depth: 1
+test_script:
+  # restore packages for our unit tests
+  - cmd: dotnet restore ./Test.Ricochet/Test.Ricochet.csproj --verbosity m
+  # run the unit tests (requires changing into the test directory)
+  - cmd: cd Test.Ricochet
+  - cmd: dotnet test
+on_finish :
+  # any cleanup in here
+deploy:
+ - provider: NuGet
+   api_key:
+     secure: RqN8h1cc9RDQzU+gkhf0YclC7prs0yhULZ4grxJUuPE3mfR7ho76wXt2eGXjcAbk
+   skip_symbols: true
