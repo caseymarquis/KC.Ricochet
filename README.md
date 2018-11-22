@@ -48,7 +48,7 @@ namespace Example.Ricochet
                 name = "Bob Belcher"
             };
 
-            KC.Ricochet.Util.CopyProps(fromT: userModifiedWebModel, toU: dbModel, ignoreCase: true, copyNullProperties: true);
+            KC.Ricochet.Util.CopyProps(fromT: userModifiedWebModel, toU: dbModel, ignoreCase: true, copyNullProperties: false);
             //You could then save the dbModel, knowing only user specified items were changed.
 
             //You can implement your own functions like the above. This is how the CopyProps function was implemented:
