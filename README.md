@@ -1,18 +1,10 @@
 # Ricochet
 
 This is a library for a few simple fast reflection operations.
-It's largely used for automagically copying properties between
+It's largely used for automagically copying properties and fields between
 similar types (ie copying from EntityFramework models to Web Controller models).
 There is also a bit of functionality for marking types with attributes, or ignoring them.
-Additionally, properties are segregated into types to make common operations easier:
 
-* AllProperties: All public properties which were not ignored with an attribute.
-* ValueAndStringProperties: Properties which are value and string types.
-* ValueAndStringDicts: Dictionary properties containing value and string types.
-* ValueAndStringIEnumerables: IEnumerable properties containing value and string types.
-* ClassProperties: Properties which are classes.
-* ClassDicts: Dictionary properties containing classes.
-* ClassIEnumerables: IEnumerable properties containing classes.
 
 ### Installing
 
@@ -39,31 +31,34 @@ namespace Example.Ricochet
             };
             var webModel = new WebModel();
 
-            //Copy all properties from the dbModel to the webModel ignoring the case of the property name
-            KC.Ricochet.Util.CopyProps(fromT: dbModel, toU: webModel, ignoreCase: true, copyNullProperties: true);
+            //Copy all public properties from the dbModel to the webModel ignoring the case of the property name
+            KC.Ricochet.Util.Copy(fromT: dbModel, toU: webModel, ignoreCase: true, copyNullMembers: true);
 
-            //Copy all properties from another webModel to the dbModel, ignoring case, and not copying any properties which are set to null.
+            //Copy all public properties from another webModel to the dbModel, ignoring case, and not copying any properties which are set to null.
             var userModifiedWebModel = new WebModel() {
                 id = 1,
                 name = "Bob Belcher"
             };
 
-            KC.Ricochet.Util.CopyProps(fromT: userModifiedWebModel, toU: dbModel, ignoreCase: true, copyNullProperties: false);
-            //You could then save the dbModel, knowing only user specified items were changed.
+            KC.Ricochet.Util.Copy(fromT: userModifiedWebModel, toU: dbModel, ignoreCase: true, copyNullMembers: false);
+            //You could then save the dbModel, knowing only user specified (non-null) items were changed.
 
-            //You can implement your own functions like the above. This is how the CopyProps function was implemented:
-            void CopyProps<T, U>(T fromT, U toU, bool ignoreCase = true, bool copyNullProperties = false) where T : class where U : class {
-                var fromProps = Util.GetProps<T>();
-                var toProps = Util.GetProps<U>();
+            //You can implement your own functions like the above. This is how the Copy function was implemented:
+            void Copy<T, U>(T fromT, U toU, bool ignoreCase = true, bool copyNullMembers = false, Func<PropertyAndFieldAccessor, bool> predicate = null) where T : class where U : class {
+                if (predicate == null) {
+                    predicate = (x) => x.IsProperty && x.IsValueOrString && x.IsPublic;
+                }
+                var fromProps = Util.GetProps<T>().Members.Where(predicate);
+                var toProps = Util.GetProps<U>().Members.Where(predicate);
 
-                foreach (var toProp in toProps.ValueAndStringProperties) {
-                    var fromProp = fromProps.ValueAndStringProperties.FirstOrDefault(x => string.Compare(x.Name, toProp.Name, true) == 0);
+                foreach (var toProp in toProps) {
+                    var fromProp = fromProps.FirstOrDefault(x => string.Compare(x.Name, toProp.Name, ignoreCase) == 0);
                     if (fromProp == null) {
                         continue;
                     }
 
                     var fromValue = fromProp.GetVal(fromT);
-                    if (!copyNullProperties && object.Equals(fromValue, null)) {
+                    if (!copyNullMembers && object.Equals(fromValue, null)) {
                         continue;
                     }
 
@@ -71,11 +66,11 @@ namespace Example.Ricochet
                 }
             }
 
-            //You can also get properties which you've marked:
-            var nameProperties = KC.Ricochet.Util.GetProps<WebModel>()
-                .AllProperties.Where(x => x.Markers.Contains("IsAName")); //See the class definition below.
+            //You can also get members which you've marked:
+            var nameMembers = KC.Ricochet.Util.GetProps<WebModel>()
+                .Members.Where(x => x.Markers.Contains("IsAName")); //See the class definition below.
 
-            //This allows you to implement special logic with marked properties.
+            //This allows you to implement special logic with marked members.
         }
     }
 

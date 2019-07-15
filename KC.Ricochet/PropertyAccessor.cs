@@ -7,14 +7,14 @@ using System.Reflection;
 
 namespace KC.Ricochet
 {
-    public class PropertyAccessor
+    public class PropertyAndFieldAccessor
     {
-
         private static DateTime EpochDateTime = new DateTime(1970, 1, 1);
         private static DateTimeOffset EpochDateTimeOffset = new DateTimeOffset(EpochDateTime, TimeSpan.Zero);
 
-        public PropertyInfo PropertyInfo { get; set; }
+        public Type Type { get; set; }
         public TypeInfo TypeInfo { get; set; }
+        public MemberInfo MemberInfo { get; set; }
 
         /// <summary>
         /// If RicochetMark is used, then any markers on
@@ -24,11 +24,25 @@ namespace KC.Ricochet
 
         public string Name
         {
-            get { return PropertyInfo.Name; }
+            get { return MemberInfo.Name; }
         }
 
         public bool IsStringConvertible { get; internal set; }
         public bool IsDoubleConvertible { get; internal set; }
+
+        public bool IsPublic { get; internal set; }
+
+        public bool IsProperty { get; internal set; }
+        public bool IsField { get; internal set; }
+
+        public bool IsValueOrString { get; internal set; }
+        public bool IsIEnumberableOfValueOrString { get; internal set; }
+        public bool IsDictionaryOfValueOrString { get; internal set; }
+
+        public bool IsClass { get; internal set; }
+        public bool IsIEnumberableOfClass { get; internal set; }
+        public bool IsDictionaryOfClass { get; internal set; }
+
         internal StringConvertibleType ValueType { get; set; }
 
         public string GetValAsString(object from) {
@@ -167,7 +181,7 @@ namespace KC.Ricochet
 
         public override string ToString()
         {
-            return PropertyInfo.Name;
+            return MemberInfo.Name;
         }
 
         public void Copy(object _from, object _to)
@@ -184,7 +198,7 @@ namespace KC.Ricochet
             {
                 if (this.TypeInfo.IsValueType)
                 {
-                    defaultVal = Activator.CreateInstance(PropertyInfo.PropertyType);
+                    defaultVal = Activator.CreateInstance(Type);
                 }
                 else
                 {

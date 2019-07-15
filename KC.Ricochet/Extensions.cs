@@ -10,26 +10,23 @@ namespace KC.Ricochet
     //http://stackoverflow.com/questions/35370384/how-to-get-declared-and-inherited-members-from-typeinfo
     public static class TypeInfoAllMemberExtensions
     {
-        public static IEnumerable<ConstructorInfo> GetAllConstructors(this TypeInfo typeInfo)
-            => GetAll(typeInfo, ti => ti.DeclaredConstructors);
+        public static IEnumerable<ConstructorInfo> GetAllConstructors(this TypeInfo typeInfo, BindingFlags flags)
+            => GetAll(typeInfo, ti => ti.GetConstructors(flags));
 
-        public static IEnumerable<EventInfo> GetAllEvents(this TypeInfo typeInfo)
-            => GetAll(typeInfo, ti => ti.DeclaredEvents);
+        public static IEnumerable<EventInfo> GetAllEvents(this TypeInfo typeInfo, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+            => GetAll(typeInfo, ti => ti.GetEvents(flags));
 
-        public static IEnumerable<FieldInfo> GetAllFields(this TypeInfo typeInfo)
-            => GetAll(typeInfo, ti => ti.DeclaredFields);
+        public static IEnumerable<FieldInfo> GetAllFields(this TypeInfo typeInfo, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+            => GetAll(typeInfo, ti => ti.GetFields(flags));
 
-        public static IEnumerable<MemberInfo> GetAllMembers(this TypeInfo typeInfo)
-            => GetAll(typeInfo, ti => ti.DeclaredMembers);
+        public static IEnumerable<MemberInfo> GetAllMembers(this TypeInfo typeInfo, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+            => GetAll(typeInfo, ti => ti.GetMembers(flags));
 
-        public static IEnumerable<MethodInfo> GetAllMethods(this TypeInfo typeInfo)
-            => GetAll(typeInfo, ti => ti.DeclaredMethods);
+        public static IEnumerable<MethodInfo> GetAllMethods(this TypeInfo typeInfo, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+            => GetAll(typeInfo, ti => ti.GetMethods(flags));
 
-        public static IEnumerable<TypeInfo> GetAllNestedTypes(this TypeInfo typeInfo)
-            => GetAll(typeInfo, ti => ti.DeclaredNestedTypes);
-
-        public static IEnumerable<PropertyInfo> GetAllProperties(this TypeInfo typeInfo)
-            => GetAll(typeInfo, ti => ti.DeclaredProperties);
+        public static IEnumerable<PropertyInfo> GetAllProperties(this TypeInfo typeInfo, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
+            => GetAll(typeInfo, ti => ti.GetProperties(flags));
 
         private static IEnumerable<T> GetAll<T>(TypeInfo typeInfo, Func<TypeInfo, IEnumerable<T>> accessor)
         {

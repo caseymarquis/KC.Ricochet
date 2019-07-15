@@ -8,13 +8,13 @@ namespace KC.Ricochet
 {
     public class Util
     {
-        public static PropertyCache GetProps<T>()
+        public static PropertyAndFieldCache GetProps<T>()
             where T : class {
-            return PropertyCache.Get<T>();
+            return PropertyAndFieldCache.Get<T>();
         }
 
-        public static PropertyCache GetProps(Type t) {
-            return PropertyCache.Get(t);
+        public static PropertyAndFieldCache GetProps(Type t) {
+            return PropertyAndFieldCache.Get(t);
         }
 
         public static IEnumerable<T> ShallowCopyRange<T>(IEnumerable<T> originalItems) where T : class, new() {
@@ -26,12 +26,13 @@ namespace KC.Ricochet
             return ret;
         }
 
-        public static T ShallowCopyItem<T>(T item, PropertyCache props = null) where T : class, new() {
-            if (props == null) {
-                props = GetProps<T>();
-            }
+        private static Func<PropertyAndFieldAccessor, bool> defaultPredicate = (x) => x.IsProperty && x.IsValueOrString && x.IsPublic;
+
+        public static T ShallowCopyItem<T>(T item, PropertyAndFieldCache props = null, Func<PropertyAndFieldAccessor, bool> predicate = null) where T : class, new() {
+            props = props ?? GetProps<T>();
+            predicate = predicate ?? defaultPredicate;
             var newT = new T();
-            foreach (var prop in props.ValueAndStringProperties) {
+            foreach (var prop in props.Members.Where(predicate)) {
                 prop.Copy(item, newT);
             }
             return newT;
@@ -58,18 +59,19 @@ namespace KC.Ricochet
             return name;
         }
 
-        public static void CopyProps<T, U>(T fromT, U toU, bool ignoreCase = true, bool copyNullProperties = false) where T : class where U : class {
-            var fromProps = Util.GetProps<T>();
-            var toProps = Util.GetProps<U>();
+        public static void Copy<T, U>(T fromT, U toU, bool ignoreCase = true, bool copyNullMembers = false, Func<PropertyAndFieldAccessor, bool> predicate = null) where T : class where U : class {
+            predicate = predicate ?? defaultPredicate;
+            var fromProps = Util.GetProps<T>().Members.Where(predicate);
+            var toProps = Util.GetProps<U>().Members.Where(predicate);
 
-            foreach (var toProp in toProps.ValueAndStringProperties) {
-                var fromProp = fromProps.ValueAndStringProperties.FirstOrDefault(x => string.Compare(x.Name, toProp.Name, true) == 0);
+            foreach (var toProp in toProps) {
+                var fromProp = fromProps.FirstOrDefault(x => string.Compare(x.Name, toProp.Name, ignoreCase) == 0);
                 if (fromProp == null) {
                     continue;
                 }
 
                 var fromValue = fromProp.GetVal(fromT);
-                if (!copyNullProperties && object.Equals(fromValue, null)) {
+                if (!copyNullMembers && object.Equals(fromValue, null)) {
                     continue;
                 }
 
