@@ -35,14 +35,14 @@ namespace Test.Ricochet
                 SomeOtherClass = a,
             };
 
-            var cache = PropertyAndFieldCache.Get(typeof(SomeClass));
+            var members = PropertyAndFieldCache.Get(typeof(SomeClass));
 
             //Test inherited property detection:
-            Assert.Contains(cache.Members, x => x.Name == "SomeOtherString");
-            Assert.Contains(cache.Members, x => x.Name == nameof(SomeBaseClass.SomeString));
+            Assert.Contains(members, x => x.Name == "SomeOtherString");
+            Assert.Contains(members, x => x.Name == nameof(SomeBaseClass.SomeString));
 
             //Test Get:
-            var someStringProp = cache.Members.First(x => x.Name.Contains("SomeString"));
+            var someStringProp = members.First(x => x.Name.Contains("SomeString"));
             Assert.Equal("bb", someStringProp.GetVal(b));
             Assert.Equal("a", someStringProp.GetVal(a));
 
@@ -51,16 +51,16 @@ namespace Test.Ricochet
             Assert.Equal("c", b.SomeString);
 
             //Test Classification:
-            Assert.Equal(13, cache.Members.Count());
-            Assert.Equal(9, cache.Members.Where(x => x.IsProperty && x.IsPublic).Count());
-            Assert.Equal(2, cache.Members.Where(x => x.IsDictionaryOfClass).Count());
-            Assert.Single(cache.Members.Where(x => x.IsIEnumberableOfClass));
-            Assert.Single(cache.Members.Where(x => x.IsClass));
-            Assert.Single(cache.Members.Where(x => x.IsDictionaryOfValueOrString));
-            Assert.Single(cache.Members.Where(x => x.IsIEnumberableOfValueOrString));
-            Assert.Equal(7, cache.Members.Where(x => x.IsValueOrString).Count());
+            Assert.Equal(13, members.Count());
+            Assert.Equal(9, members.Where(x => x.IsProperty && x.IsPublic).Count());
+            Assert.Equal(2, members.Where(x => x.IsDictionaryOfClass).Count());
+            Assert.Single(members.Where(x => x.IsIEnumberableOfClass));
+            Assert.Single(members.Where(x => x.IsClass));
+            Assert.Single(members.Where(x => x.IsDictionaryOfValueOrString));
+            Assert.Single(members.Where(x => x.IsIEnumberableOfValueOrString));
+            Assert.Equal(7, members.Where(x => x.IsValueOrString).Count());
 
-            foreach (var prop in cache.Members) {
+            foreach (var prop in members) {
                 prop.Copy(b, a);
             }
 
@@ -74,38 +74,38 @@ namespace Test.Ricochet
             Assert.Equal(a.WeirdDict, b.WeirdDict);
 
             //Test IsEqual
-            foreach (var prop in cache.Members) {
+            foreach (var prop in members) {
                 Assert.True(prop.IsEqual(a, b));
             }
 
             //Test string conversions.
-            foreach (var prop in cache.Members) {
+            foreach (var prop in members) {
                 if (prop.IsStringConvertible) {
                     var s = prop.GetValAsString(a);
                     prop.SetValFromString(a, s);
                 }
             }
 
-            foreach (var prop in cache.Members) {
+            foreach (var prop in members) {
                 Assert.True(prop.IsEqual(a, b));
             }
 
             //Test double conversions.
-            foreach (var prop in cache.Members) {
+            foreach (var prop in members) {
                 if (prop.IsDoubleConvertible) {
                     var d = prop.GetValAsDouble(a);
                     prop.SetValFromDouble(a, d);
                 }
             }
 
-            foreach (var prop in cache.Members) {
+            foreach (var prop in members) {
                 Assert.True(prop.IsEqual(a, b));
             }
 
             //Test Markers
-            Assert.Single(cache.Members.Where(x => x.Markers.Contains("Special!")));
-            Assert.Single(cache.Members.Where(x => x.Markers.Contains("Multiple")));
-            Assert.Single(cache.Members.Where(x => x.Markers.Contains("extends")));
+            Assert.Single(members.Where(x => x.Markers.Contains("Special!")));
+            Assert.Single(members.Where(x => x.Markers.Contains("Multiple")));
+            Assert.Single(members.Where(x => x.Markers.Contains("extends")));
         }
 
         [System.AttributeUsage(System.AttributeTargets.Property)]

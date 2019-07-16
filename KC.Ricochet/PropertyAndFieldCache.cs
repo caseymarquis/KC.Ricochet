@@ -17,19 +17,22 @@ namespace KC.Ricochet {
         public IEnumerable<PropertyAndFieldAccessor> Members => m_PropertiesAndFields;
         private List<PropertyAndFieldAccessor> m_PropertiesAndFields = new List<PropertyAndFieldAccessor>();
 
-        public static PropertyAndFieldCache Get<T>() {
-            return Get(typeof(T));
+        public static IEnumerable<PropertyAndFieldAccessor> Get<T>(Func<PropertyAndFieldAccessor, bool> predicate = null) {
+            return Get(typeof(T), predicate);
         }
 
-        public static PropertyAndFieldCache Get(Type classType) {
+        public static IEnumerable<PropertyAndFieldAccessor> Get(Type classType, Func<PropertyAndFieldAccessor, bool> predicate = null) {
             PropertyAndFieldCache ret = null;
             lock (lockCaches) {
                 if (!caches.TryGetValue(classType, out ret)) {
                     ret = new PropertyAndFieldCache(classType);
                     caches[classType] = ret;
                 }
-                return ret;
             }
+            if (predicate == null) {
+                return ret.Members;
+            }
+            return ret.Members.Where(predicate);
         }
 
         public PropertyAndFieldCache(Type classType) {

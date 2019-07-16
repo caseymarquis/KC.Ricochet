@@ -2,37 +2,44 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace KC.Ricochet
 {
-    public class Util
+    public static class Util
     {
-        public static PropertyAndFieldCache GetProps<T>()
+        public static IEnumerable<PropertyAndFieldAccessor> GetPropsAndFields<T>(Func<PropertyAndFieldAccessor, bool> predicate = null)
             where T : class {
-            return PropertyAndFieldCache.Get<T>();
+            return PropertyAndFieldCache.Get<T>(predicate);
         }
 
-        public static PropertyAndFieldCache GetProps(Type t) {
-            return PropertyAndFieldCache.Get(t);
+        public static IEnumerable<PropertyAndFieldAccessor> GetPropsAndFields(Type t, Func<PropertyAndFieldAccessor, bool> predicate = null) {
+            return PropertyAndFieldCache.Get(t, predicate);
+        }
+
+        private static Func<PropertyAndFieldAccessor, bool> publicValueProps = (x) => x.IsProperty && x.IsValueOrString && x.IsPublic;
+        public static IEnumerable<PropertyAndFieldAccessor> GetPublicValueProps<T>()
+            where T : class {
+            return GetPropsAndFields<T>(publicValueProps);
+        }
+
+        public static IEnumerable<PropertyAndFieldAccessor> GetPublicValueProps(Type t) {
+            return GetPropsAndFields(t, publicValueProps);
         }
 
         public static IEnumerable<T> ShallowCopyRange<T>(IEnumerable<T> originalItems) where T : class, new() {
             var ret = new List<T>(originalItems.Count());
-            var props = Util.GetProps<T>();
+            var props = Util.GetPropsAndFields<T>();
             foreach (var item in originalItems) {
-                ret.Add(Util.ShallowCopyItem(item, props));
+                ret.Add(props.ShallowCopyItem(item));
             }
             return ret;
         }
 
-        private static Func<PropertyAndFieldAccessor, bool> defaultPredicate = (x) => x.IsProperty && x.IsValueOrString && x.IsPublic;
-
-        public static T ShallowCopyItem<T>(T item, PropertyAndFieldCache props = null, Func<PropertyAndFieldAccessor, bool> predicate = null) where T : class, new() {
-            props = props ?? GetProps<T>();
-            predicate = predicate ?? defaultPredicate;
+        public static T ShallowCopyItem<T>(this IEnumerable<PropertyAndFieldAccessor> members, T item) where T : class, new() {
             var newT = new T();
-            foreach (var prop in props.Members.Where(predicate)) {
+            foreach (var prop in members) {
                 prop.Copy(item, newT);
             }
             return newT;
@@ -59,10 +66,17 @@ namespace KC.Ricochet
             return name;
         }
 
-        public static void Copy<T, U>(T fromT, U toU, bool ignoreCase = true, bool copyNullMembers = false, Func<PropertyAndFieldAccessor, bool> predicate = null) where T : class where U : class {
-            predicate = predicate ?? defaultPredicate;
-            var fromProps = Util.GetProps<T>().Members.Where(predicate);
-            var toProps = Util.GetProps<U>().Members.Where(predicate);
+        public static void CopyPublicValueProps<T, U>(T fromT, U toU, bool ignoreCase = true, bool copyNullMembers = false) where T : class where U : class {
+            Copy(fromT, toU, publicValueProps, ignoreCase, copyNullMembers);
+        }
+
+        public static void Copy<T, U>(T fromT, U toU, Func<PropertyAndFieldAccessor, bool> predicate = null, bool ignoreCase = true, bool copyNullMembers = false) where T : class where U : class {
+            var fromProps = Util.GetPropsAndFields<T>();
+            var toProps = Util.GetPropsAndFields<U>();
+            if (predicate != null) {
+                fromProps = fromProps.Where(predicate);
+                toProps = toProps.Where(predicate);
+            }
 
             foreach (var toProp in toProps) {
                 var fromProp = fromProps.FirstOrDefault(x => string.Compare(x.Name, toProp.Name, ignoreCase) == 0);
