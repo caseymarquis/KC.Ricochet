@@ -92,5 +92,21 @@ namespace KC.Ricochet
                 toProp.SetVal(toU, fromValue);
             }
         }
+
+        public static TypedInstantiator<T> GetConstructor<T>(params Type[] parameterTypes) {
+            return InstantiatorCache.Get<T>(parameterTypes);
+        }
+
+        public static Instantiator GetConstructor(Type classType, params Type[] parameterTypes) {
+            return InstantiatorCache.Get(classType, parameterTypes);
+        }
+
+        public static IEnumerable<TypedInstantiator<T>> GetAllConstructors<T>() {
+            return InstantiatorCache.GetAll<T>();
+        }
+
+        public static IEnumerable<Instantiator> GetAllConstructors(Type classType) {
+            return InstantiatorCache.GetAll(classType);
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace Example.Ricochet
     {
         static void Main(string[] args)
         {
-            var dbModel = new DataBaseModel() {
+            var dbModel = new DatabaseModel() {
                 Id = 1,
                 Name = "Bob",
                 Date = DateTime.UtcNow
@@ -59,10 +59,18 @@ namespace Example.Ricochet
             var nameMembers = KC.Ricochet.Util.GetPropsAndFields<WebModel>(x => x.Markers.Contains("IsAName"));
             //See class definition below with RicochetMark attribute.
             //This allows you to implement special logic with marked members.
+
+            //There's also functionality for creating objects.
+            //This is less useful unless you're building your own dependency injection or something:
+            var withAType = KC.Ricochet.Util.GetConstructor<DatabaseModel>(typeof(int)).New();
+            var withoutAType = KC.Ricochet.Util.GetConstructor(typeof(DatabaseModel), typeof(int)).New();
         }
     }
 
-    class DataBaseModel {
+    class DatabaseModel {
+        public DatabaseModel() { }
+        public DatabaseModel(int i) { }
+
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime Date { get; set; }

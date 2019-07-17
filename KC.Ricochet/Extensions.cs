@@ -11,7 +11,7 @@ namespace KC.Ricochet
     public static class TypeInfoAllMemberExtensions
     {
         public static IEnumerable<ConstructorInfo> GetAllConstructors(this TypeInfo typeInfo, BindingFlags flags)
-            => GetAll(typeInfo, ti => ti.GetConstructors(flags));
+            => typeInfo.GetConstructors(flags); //We shouldn't get base constructors.
 
         public static IEnumerable<EventInfo> GetAllEvents(this TypeInfo typeInfo, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic)
             => GetAll(typeInfo, ti => ti.GetEvents(flags));
