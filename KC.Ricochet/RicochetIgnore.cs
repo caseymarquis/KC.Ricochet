@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace KC.Ricochet
 {
-    [System.AttributeUsage(System.AttributeTargets.Property)]
     public class RicochetIgnore : System.Attribute
     {
     }
