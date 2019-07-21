@@ -71,7 +71,8 @@ namespace KC.Ricochet {
                         var tPropertyOrField = areProperties ? ((PropertyInfo)memberInfo).PropertyType : ((FieldInfo)memberInfo).FieldType;
 
                         //object obj => ((classType)obj).PropertyName
-                        var propertyOrFieldExpr = Expression.PropertyOrField(typeCastParameterExpr, memberInfo.Name);
+                        //NOTE: We can't use Expression.PropertyOrField as it is not case sensitive, and can confuse properties and fields with identical names.
+                        var propertyOrFieldExpr = areProperties? Expression.Property(typeCastParameterExpr, (PropertyInfo)memberInfo) : Expression.Field(typeCastParameterExpr, (FieldInfo)memberInfo);
                         //object newValue
                         var valueExpr = Expression.Parameter(typeof(object), "newValue");
 
