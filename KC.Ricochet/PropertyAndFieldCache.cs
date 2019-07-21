@@ -53,69 +53,74 @@ namespace KC.Ricochet {
                 //object obj
                 var objectParameterExpr = Expression.Parameter(typeof(object), "obj");
                 foreach (var memberInfo in memberInfos) {
-                    var ignoreAttrs = memberInfo.GetCustomAttributes()
-                        .Where(x => {
-                            var t = x.GetType();
-                            return t == typeof(RicochetIgnore)
-                            || t.GetTypeInfo().IsSubclassOf(typeof(RicochetIgnore))
-                            || t == typeof(CompilerGeneratedAttribute);
-                        });
-                    if (ignoreAttrs.Count() > 0) {
-                        continue;
-                    }
-
-                    //object obj => (classType)obj
-                    var typeCastParameterExpr = Expression.Convert(objectParameterExpr, memberInfo.DeclaringType);
-
-                    var tPropertyOrField = areProperties ? ((PropertyInfo)memberInfo).PropertyType : ((FieldInfo)memberInfo).FieldType;
-
-                    //object obj => ((classType)obj).PropertyName
-                    var propertyOrFieldExpr = Expression.PropertyOrField(typeCastParameterExpr, memberInfo.Name);
-                    //object newValue
-                    var valueExpr = Expression.Parameter(typeof(object), "newValue");
-
-                    //object newValue => (PropertyType)newValue
-                    var valueCast = Expression.Convert(valueExpr, propertyOrFieldExpr.Type);
-
-                    //(object obj, object newValue) => ((classType)obj).PropertyName = (PropertyType)newValue 
-                    var assignExpr = Expression.Assign(propertyOrFieldExpr, valueCast);
-
-                    //object obj => (object) (((classType)obj).PropertyName)
-                    var convertedExpr = Expression.Convert(propertyOrFieldExpr, typeof(object));
-
-                    var getExpr = Expression.Lambda<Func<object, object>>(convertedExpr, objectParameterExpr);
-                    var setExpr = Expression.Lambda<Action<object, object>>(assignExpr, objectParameterExpr, valueExpr);
-
-                    var getFunc = getExpr.Compile();
-                    var setFunc = setExpr.Compile();
-
-                    var newProp = new PropertyAndFieldAccessor {
-                        IsProperty = areProperties,
-                        IsField = !areProperties,
-                        IsPublic = arePublic,
-                        Type = tPropertyOrField,
-                        TypeInfo = tPropertyOrField.GetTypeInfo(),
-                        MemberInfo = memberInfo,
-                        m_Get_From = getExpr.Compile(),
-                        m_Set_On_To = setExpr.Compile(),
-                    };
-
-                    var markAttrs = memberInfo.GetCustomAttributes()
-                        .Where(x => {
-                            var t = x.GetType();
-                            return t == typeof(RicochetMark) || t.GetTypeInfo().IsSubclassOf(typeof(RicochetMark));
-                        });
-                    foreach (var attr in markAttrs) {
-                        var markAttr = attr as RicochetMark;
-                        if (markAttr != null && markAttr.TextValues != null) {
-                            if (markAttr.TextValues.Length > 0) {
-                                newProp.Markers = newProp.Markers.Concat(markAttr.TextValues).ToArray();
-                            }
+                    try {
+                        var ignoreAttrs = memberInfo.GetCustomAttributes()
+                            .Where(x => {
+                                var t = x.GetType();
+                                return t == typeof(RicochetIgnore)
+                                || t.GetTypeInfo().IsSubclassOf(typeof(RicochetIgnore))
+                                || t == typeof(CompilerGeneratedAttribute);
+                            });
+                        if (ignoreAttrs.Count() > 0) {
+                            continue;
                         }
 
-                    }
+                        //object obj => (classType)obj
+                        var typeCastParameterExpr = Expression.Convert(objectParameterExpr, memberInfo.DeclaringType);
 
-                    m_PropertiesAndFields.Add(newProp);
+                        var tPropertyOrField = areProperties ? ((PropertyInfo)memberInfo).PropertyType : ((FieldInfo)memberInfo).FieldType;
+
+                        //object obj => ((classType)obj).PropertyName
+                        var propertyOrFieldExpr = Expression.PropertyOrField(typeCastParameterExpr, memberInfo.Name);
+                        //object newValue
+                        var valueExpr = Expression.Parameter(typeof(object), "newValue");
+
+                        //object newValue => (PropertyType)newValue
+                        var valueCast = Expression.Convert(valueExpr, propertyOrFieldExpr.Type);
+
+                        //(object obj, object newValue) => ((classType)obj).PropertyName = (PropertyType)newValue 
+                        var assignExpr = Expression.Assign(propertyOrFieldExpr, valueCast);
+
+                        //object obj => (object) (((classType)obj).PropertyName)
+                        var convertedExpr = Expression.Convert(propertyOrFieldExpr, typeof(object));
+
+                        var getExpr = Expression.Lambda<Func<object, object>>(convertedExpr, objectParameterExpr);
+                        var setExpr = Expression.Lambda<Action<object, object>>(assignExpr, objectParameterExpr, valueExpr);
+
+                        var getFunc = getExpr.Compile();
+                        var setFunc = setExpr.Compile();
+
+                        var newProp = new PropertyAndFieldAccessor {
+                            IsProperty = areProperties,
+                            IsField = !areProperties,
+                            IsPublic = arePublic,
+                            Type = tPropertyOrField,
+                            TypeInfo = tPropertyOrField.GetTypeInfo(),
+                            MemberInfo = memberInfo,
+                            m_Get_From = getExpr.Compile(),
+                            m_Set_On_To = setExpr.Compile(),
+                        };
+
+                        var markAttrs = memberInfo.GetCustomAttributes()
+                            .Where(x => {
+                                var t = x.GetType();
+                                return t == typeof(RicochetMark) || t.GetTypeInfo().IsSubclassOf(typeof(RicochetMark));
+                            });
+                        foreach (var attr in markAttrs) {
+                            var markAttr = attr as RicochetMark;
+                            if (markAttr != null && markAttr.TextValues != null) {
+                                if (markAttr.TextValues.Length > 0) {
+                                    newProp.Markers = newProp.Markers.Concat(markAttr.TextValues).ToArray();
+                                }
+                            }
+
+                        }
+
+                        m_PropertiesAndFields.Add(newProp);
+                    }
+                    catch (Exception ex) {
+                        throw new ApplicationException($"{classType.Name}.{memberInfo.Name}: Failed to compile getter or setter. To proceed, mark the type with [RicochetIgnore]. Please create an issue at github on caseymarquis/KC.Ricochet if you believe you've found a solvable edge case.", ex);
+                    }
                 }
             }
 
