@@ -119,7 +119,7 @@ namespace KC.Ricochet {
                         m_PropertiesAndFields.Add(newProp);
                     }
                     catch (Exception ex) {
-                        throw new ApplicationException($"{classType.Name}.{memberInfo.Name}: Failed to compile getter or setter. To proceed, mark the type with [RicochetIgnore]. Please create an issue at github on caseymarquis/KC.Ricochet if you believe you've found a solvable edge case.", ex);
+                        throw new ApplicationException($"{classType.Name}.{memberInfo.Name}: Failed to compile getter or setter. To proceed, mark the member with [RicochetIgnore]. Please create an issue at github on caseymarquis/KC.Ricochet if you believe you've found a solvable edge case.", ex);
                     }
                 }
             }
