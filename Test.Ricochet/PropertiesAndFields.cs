@@ -6,96 +6,10 @@ using Xunit;
 
 namespace Test.Ricochet
 {
-    public class UnitTest1
+    public class PropAndFieldTests
     {
         [Fact]
-        public void CreateNew() {
-            void check(ITestConstructor normal, ITestConstructor reflection) {
-                Assert.Equal(normal.a, reflection.a);
-                Assert.Equal(normal.b, reflection.b);
-            }
-
-            check(new PublicConstructors(), InstantiatorCache.Get<PublicConstructors>().New());
-            check(new PublicConstructors(7), InstantiatorCache.Get<PublicConstructors>(typeof(int)).New(7));
-            check(new PublicConstructors(8, "nine"), InstantiatorCache.Get<PublicConstructors>(typeof(int), typeof(string)).New(8, "nine"));
-
-            check(new PublicConstructors(), InstantiatorCache.Get<PrivateConstructors>().New());
-            check(new PublicConstructors(7), InstantiatorCache.Get<PrivateConstructors>(typeof(int)).New(7));
-            check(new PublicConstructors(8, "nine"), InstantiatorCache.Get<PrivateConstructors>(typeof(int), typeof(string)).New(8, "nine"));
-        }
-
-        [Fact]
-        public void CreateNew_NoMatchingConstructor() {
-            Assert.Throws<ApplicationException>(() => {
-                var result = InstantiatorCache.Get<PublicConstructors>(typeof(double)).New((double)2.2);
-            });
-        }
-
-        [Fact]
-        public void CreateNew_WrongTypes() {
-            Assert.Throws<InvalidCastException>(() => {
-                var result = InstantiatorCache.Get<PublicConstructors>(typeof(int)).New((double)2.2);
-            });
-        }
-
-        [Fact]
-        public void CreateNew_WrongNumberOfArgs() {
-            Assert.Throws<ApplicationException>(() => {
-                var result = InstantiatorCache.Get<PublicConstructors>(typeof(int)).New();
-            });
-            Assert.Throws<ApplicationException>(() => {
-                var result = InstantiatorCache.Get<PublicConstructors>().New(7);
-            });
-        }
-
-        public interface ITestConstructor {
-            int a { get; set; }
-            string b { get; set; }
-        }
-
-        public class BaseConstructor {
-            public BaseConstructor() {
-            }
-            public BaseConstructor(double d) {
-            }
-        }
-
-        public class PublicConstructors : BaseConstructor, ITestConstructor {
-            public int a { get; set; } = 0;
-            public string b { get; set; } = "0";
-            public PublicConstructors() {
-                a = 1;
-                b = "1";
-            }
-            public PublicConstructors(int a) {
-                this.a = a;
-                this.b = "2";
-            }
-            public PublicConstructors(int a, string b) {
-                this.a = a;
-                this.b = b;
-            }
-        }
-
-        public class PrivateConstructors : ITestConstructor {
-            public int a { get; set; } = 0;
-            public string b { get; set; } = "0";
-            private PrivateConstructors() {
-                a = 1;
-                b = "1";
-            }
-            private PrivateConstructors(int a) {
-                this.a = a;
-                this.b = "2";
-            }
-            private PrivateConstructors(int a, string b) {
-                this.a = a;
-                this.b = b;
-            }
-        }
-
-        [Fact]
-        public void PropertiesAndFields()
+        public void Main()
         {
             var a = new SomeClass() {
                 SomeString = "a",
@@ -137,14 +51,14 @@ namespace Test.Ricochet
             Assert.Equal("c", b.SomeString);
 
             //Test Classification:
-            Assert.Equal(13, members.Count());
-            Assert.Equal(9, members.Where(x => x.IsProperty && x.IsPublic).Count());
+            Assert.Equal(15, members.Count());
+            Assert.Equal(11, members.Where(x => x.IsProperty && x.IsPublic).Count());
             Assert.Equal(2, members.Where(x => x.IsDictionaryOfClass).Count());
             Assert.Single(members.Where(x => x.IsIEnumberableOfClass));
-            Assert.Single(members.Where(x => x.IsClass));
+            Assert.Equal(2, members.Where(x => x.IsClass).Count());
             Assert.Single(members.Where(x => x.IsDictionaryOfValueOrString));
             Assert.Single(members.Where(x => x.IsIEnumberableOfValueOrString));
-            Assert.Equal(7, members.Where(x => x.IsValueOrString).Count());
+            Assert.Equal(8, members.Where(x => x.IsValueOrString).Count());
 
             foreach (var prop in members) {
                 prop.Copy(b, a);
@@ -202,6 +116,13 @@ namespace Test.Ricochet
         class SomeBaseClass {
             public string SomeString { get; set; }
             private string SomeOtherString { get; set; }
+            public long GetPrivateSet { get; private set; }
+            protected virtual int DefaultVirtual => 5;
+            protected virtual int OverridenVirtual => 6;
+        }
+
+        class SomeGenericClass<T> {
+            T value;
         }
 
         class SomeClass : SomeBaseClass {
@@ -216,6 +137,7 @@ namespace Test.Ricochet
             public Dictionary<int, SomeClass> ClassDict { get; set; }
             public Dictionary<SomeClass, SomeClass> WeirdDict { get; set; }
             public SomeClass SomeOtherClass { get; set; }
+            public SomeGenericClass<int> SomeGenericClass {get; set;}
 
             private int privateField;
             internal int internalField;
@@ -228,6 +150,8 @@ namespace Test.Ricochet
 
             [RicochetIgnore]
             public int IgnoreMeAttriProp { get; set; }
+
+            protected override int OverridenVirtual => 7;
         }
 
     }
