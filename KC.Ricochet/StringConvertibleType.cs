@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KC.Ricochet
 {
-    internal enum StringConvertibleType
+    public enum StringConvertibleType
     {
         tNone,
         tString,

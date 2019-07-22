@@ -12,15 +12,15 @@ namespace KC.Ricochet
         private static DateTime EpochDateTime = new DateTime(1970, 1, 1);
         private static DateTimeOffset EpochDateTimeOffset = new DateTimeOffset(EpochDateTime, TimeSpan.Zero);
 
-        public Type Type { get; set; }
-        public TypeInfo TypeInfo { get; set; }
-        public MemberInfo MemberInfo { get; set; }
+        public Type Type { get; internal set; }
+        public TypeInfo TypeInfo { get; internal set; }
+        public MemberInfo MemberInfo { get; internal set; }
 
         /// <summary>
         /// If RicochetMark is used, then any markers on
         /// properties will be stored here.
         /// </summary>
-        public string[] Markers = new string[] { };
+        public string[] Markers { get; internal set; } = new string[] { };
 
         public string Name
         {
@@ -43,7 +43,7 @@ namespace KC.Ricochet
         public bool IsIEnumberableOfClass { get; internal set; }
         public bool IsDictionaryOfClass { get; internal set; }
 
-        internal StringConvertibleType ValueType { get; set; }
+        public StringConvertibleType ValueType { get; internal set; }
 
         public string GetValAsString(object from) {
             if (!IsStringConvertible) {
