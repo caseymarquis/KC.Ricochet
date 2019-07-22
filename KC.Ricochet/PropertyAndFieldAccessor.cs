@@ -44,6 +44,7 @@ namespace KC.Ricochet
         public bool IsDictionaryOfClass { get; internal set; }
 
         public StringConvertibleType ValueType { get; internal set; }
+        public int ClassDepth { get; internal set; }
 
         public string GetValAsString(object from) {
             if (!IsStringConvertible) {

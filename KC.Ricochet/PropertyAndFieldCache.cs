@@ -39,8 +39,8 @@ namespace KC.Ricochet {
             var typeInfo = classType.GetTypeInfo();
 
             var flagOnAll = BindingFlags.DeclaredOnly | BindingFlags.Instance;
-            var allPublicProperties = typeInfo.GetAllProperties(BindingFlags.Public | flagOnAll).Where(x => x.CanRead && x.CanWrite).ToArray();
-            var allNonPublicProperties = typeInfo.GetAllProperties(BindingFlags.NonPublic | flagOnAll).Where(x => x.CanRead && x.CanWrite).ToArray();
+            var allPublicProperties = typeInfo.GetAllProperties(BindingFlags.Public | flagOnAll).Where(x => x.PropertyInfo.CanRead && x.PropertyInfo.CanWrite).ToArray();
+            var allNonPublicProperties = typeInfo.GetAllProperties(BindingFlags.NonPublic | flagOnAll).Where(x => x.PropertyInfo.CanRead && x.PropertyInfo.CanWrite).ToArray();
             var allPublicFields = typeInfo.GetAllFields(BindingFlags.Public | flagOnAll).ToArray();
             var allNonPublicFields = typeInfo.GetAllFields(BindingFlags.NonPublic | flagOnAll).ToArray();
 
@@ -49,12 +49,12 @@ namespace KC.Ricochet {
             addMembers(allPublicFields, areProperties: false, arePublic: true);
             addMembers(allNonPublicFields, areProperties: false, arePublic: false);
 
-            void addMembers(IEnumerable<MemberInfo> memberInfos, bool areProperties, bool arePublic) {
+            void addMembers(IEnumerable<InfoWithLevel> memberInfos, bool areProperties, bool arePublic) {
                 //object obj
                 var objectParameterExpr = Expression.Parameter(typeof(object), "obj");
                 foreach (var memberInfo in memberInfos) {
                     try {
-                        var ignoreAttrs = memberInfo.GetCustomAttributes()
+                        var ignoreAttrs = memberInfo.Info.GetCustomAttributes()
                             .Where(x => {
                                 var t = x.GetType();
                                 return t == typeof(RicochetIgnore)
@@ -66,13 +66,13 @@ namespace KC.Ricochet {
                         }
 
                         //object obj => (classType)obj
-                        var typeCastParameterExpr = Expression.Convert(objectParameterExpr, memberInfo.DeclaringType);
+                        var typeCastParameterExpr = Expression.Convert(objectParameterExpr, memberInfo.Info.DeclaringType);
 
-                        var tPropertyOrField = areProperties ? ((PropertyInfo)memberInfo).PropertyType : ((FieldInfo)memberInfo).FieldType;
+                        var tPropertyOrField = areProperties ? memberInfo.PropertyInfo.PropertyType : memberInfo.FieldInfo.FieldType;
 
                         //object obj => ((classType)obj).PropertyName
                         //NOTE: We can't use Expression.PropertyOrField as it is not case sensitive, and can confuse properties and fields with identical names.
-                        var propertyOrFieldExpr = areProperties? Expression.Property(typeCastParameterExpr, (PropertyInfo)memberInfo) : Expression.Field(typeCastParameterExpr, (FieldInfo)memberInfo);
+                        var propertyOrFieldExpr = areProperties? Expression.Property(typeCastParameterExpr, memberInfo.PropertyInfo) : Expression.Field(typeCastParameterExpr, memberInfo.FieldInfo);
                         //object newValue
                         var valueExpr = Expression.Parameter(typeof(object), "newValue");
 
@@ -97,12 +97,13 @@ namespace KC.Ricochet {
                             IsPublic = arePublic,
                             Type = tPropertyOrField,
                             TypeInfo = tPropertyOrField.GetTypeInfo(),
-                            MemberInfo = memberInfo,
+                            MemberInfo = memberInfo.Info,
+                            ClassDepth = memberInfo.Level,
                             m_Get_From = getExpr.Compile(),
                             m_Set_On_To = setExpr.Compile(),
                         };
 
-                        var markAttrs = memberInfo.GetCustomAttributes()
+                        var markAttrs = memberInfo.Info.GetCustomAttributes()
                             .Where(x => {
                                 var t = x.GetType();
                                 return t == typeof(RicochetMark) || t.GetTypeInfo().IsSubclassOf(typeof(RicochetMark));
@@ -120,7 +121,7 @@ namespace KC.Ricochet {
                         m_PropertiesAndFields.Add(newProp);
                     }
                     catch (Exception ex) {
-                        throw new ApplicationException($"{classType.Name}.{memberInfo.Name}: Failed to compile getter or setter. To proceed, mark the member with [RicochetIgnore]. Please create an issue at github on caseymarquis/KC.Ricochet if you believe you've found a solvable edge case.", ex);
+                        throw new ApplicationException($"{classType.Name}.{memberInfo.Info.Name}: Failed to compile getter or setter. To proceed, mark the member with [RicochetIgnore]. Please create an issue at github on caseymarquis/KC.Ricochet if you believe you've found a solvable edge case.", ex);
                     }
                 }
             }
