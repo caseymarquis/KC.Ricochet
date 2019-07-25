@@ -78,7 +78,7 @@ namespace Example.Ricochet
 
             //There's also functionality for creating objects.
             //This is less useful unless you're building your own dependency injection or something:
-            var withAType = KC.Ricochet.Util.GetConstructor<DatabaseModel>(typeof(int)).New();
+            var withAType = KC.Ricochet.Util.GetConstructor<DatabaseModel>(typeof(int)).New(6);
             var withoutAType = KC.Ricochet.Util.GetConstructor(typeof(DatabaseModel), typeof(int)).New(7);
         }
     }
