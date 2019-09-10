@@ -53,6 +53,11 @@ namespace KC.Ricochet {
                 //object obj
                 var objectParameterExpr = Expression.Parameter(typeof(object), "obj");
                 foreach (var memberInfo in memberInfos) {
+                    if (!areProperties) {
+                        if (memberInfo.FieldInfo.IsInitOnly) {
+                            continue;
+                        }
+                    }
                     try {
                         var ignoreAttrs = memberInfo.Info.GetCustomAttributes()
                             .Where(x => {

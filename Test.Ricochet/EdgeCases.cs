@@ -46,5 +46,16 @@ namespace Test.Ricochet
             int a { get; set; }
         }
 
+        [Fact]
+        public void ReadOnlyFields() {
+            var props = Util.GetPropsAndFields<Class5>();
+            Assert.Single(props);
+        }
+
+        public class Class5 {
+            private int i;
+            private readonly int j;
+        }
+
     }
 }
