@@ -57,5 +57,19 @@ namespace Test.Ricochet
             private readonly int j;
         }
 
+        [Fact]
+        public void InitProperty() {
+            var props = Util.GetPropsAndFields<Class6>();
+            Assert.Single(props);
+            var prop = props.First();
+            var instance = new Class6();
+            prop.SetVal(instance, 1);
+            Assert.Equal(1, instance.Test);
+        }
+
+        class Class6 {
+            public int Test { get; init; }
+        }
+
     }
 }
