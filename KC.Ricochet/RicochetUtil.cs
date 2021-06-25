@@ -7,7 +7,7 @@ using System.Text;
 
 namespace KC.Ricochet
 {
-    public static class Util
+    public static class RicochetUtil
     {
         public static IEnumerable<PropertyAndFieldAccessor> GetPropsAndFields<T>(Func<PropertyAndFieldAccessor, bool> predicate = null)
             where T : class {
@@ -30,7 +30,7 @@ namespace KC.Ricochet
 
         public static IEnumerable<T> ShallowCopyRange<T>(IEnumerable<T> originalItems) where T : class, new() {
             var ret = new List<T>(originalItems.Count());
-            var props = Util.GetPropsAndFields<T>();
+            var props = RicochetUtil.GetPropsAndFields<T>();
             foreach (var item in originalItems) {
                 ret.Add(props.ShallowCopyItem(item));
             }
@@ -71,8 +71,8 @@ namespace KC.Ricochet
         }
 
         public static void Copy<T, U>(T fromT, U toU, Func<PropertyAndFieldAccessor, bool> predicate = null, bool ignoreCase = true, bool copyNullMembers = false) where T : class where U : class {
-            var fromProps = Util.GetPropsAndFields<T>();
-            var toProps = Util.GetPropsAndFields<U>();
+            var fromProps = RicochetUtil.GetPropsAndFields<T>();
+            var toProps = RicochetUtil.GetPropsAndFields<U>();
             if (predicate != null) {
                 fromProps = fromProps.Where(predicate);
                 toProps = toProps.Where(predicate);

@@ -1,4 +1,5 @@
 using KC.Ricochet;
+using KC.Ricochet.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,7 +15,7 @@ namespace Test.Ricochet
         [Fact]
         public void FieldAndPropertyWithTheSameNameExceptCase()
         {
-            KC.Ricochet.Util.GetPropsAndFields<Class1>();
+            RicochetUtil.GetPropsAndFields<Class1>();
         }
 
         public class Class1 {
@@ -24,7 +25,7 @@ namespace Test.Ricochet
 
         [Fact]
         public void PropertiesWithSameNameExceptCase() {
-            KC.Ricochet.Util.GetPropsAndFields<Class2>();
+            RicochetUtil.GetPropsAndFields<Class2>();
         }
 
         public class Class2 {
@@ -34,7 +35,7 @@ namespace Test.Ricochet
 
         [Fact]
         public void ShadowedFields() {
-            var props = KC.Ricochet.Util.GetPropsAndFields<Class4>();
+            var props = RicochetUtil.GetPropsAndFields<Class4>();
             var x = 0;
         }
 
@@ -48,7 +49,7 @@ namespace Test.Ricochet
 
         [Fact]
         public void ReadOnlyFields() {
-            var props = Util.GetPropsAndFields<Class5>();
+            var props = RicochetUtil.GetPropsAndFields<Class5>();
             Assert.Single(props);
         }
 
@@ -59,7 +60,7 @@ namespace Test.Ricochet
 
         [Fact]
         public void InitProperty() {
-            var props = Util.GetPropsAndFields<Class6>();
+            var props = RicochetUtil.GetPropsAndFields<Class6>();
             Assert.Single(props);
             var prop = props.First();
             var instance = new Class6();

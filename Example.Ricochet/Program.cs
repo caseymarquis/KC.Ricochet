@@ -16,7 +16,7 @@ namespace Example.Ricochet
             var webModel = new WebModel();
 
             //Copy all public properties from the dbModel to the webModel ignoring the case of the property name
-            KC.Ricochet.Util.CopyPublicValueProps(fromT: dbModel, toU: webModel, ignoreCase: true, copyNullMembers: true);
+            KC.Ricochet.RicochetUtil.CopyPublicValueProps(fromT: dbModel, toU: webModel, ignoreCase: true, copyNullMembers: true);
 
             //Copy all public properties from another webModel to the dbModel, ignoring case, and not copying any properties which are set to null.
             var userModifiedWebModel = new WebModel() {
@@ -24,7 +24,7 @@ namespace Example.Ricochet
                 name = "Bob Belcher"
             };
 
-            KC.Ricochet.Util.CopyPublicValueProps(fromT: userModifiedWebModel, toU: dbModel, ignoreCase: true, copyNullMembers: false);
+            KC.Ricochet.RicochetUtil.CopyPublicValueProps(fromT: userModifiedWebModel, toU: dbModel, ignoreCase: true, copyNullMembers: false);
             //You could then save the dbModel, knowing only user specified (non-null) items were changed.
 
             //You can implement your own functions like the above. This is how the Copy function was implemented:
@@ -33,8 +33,8 @@ namespace Example.Ricochet
             }
 
             void Copy<T, U>(T fromT, U toU, Func<PropertyAndFieldAccessor, bool> predicate = null, bool ignoreCase = true, bool copyNullMembers = false) where T : class where U : class {
-                var fromProps = Util.GetPropsAndFields<T>();
-                var toProps = Util.GetPropsAndFields<U>();
+                var fromProps = RicochetUtil.GetPropsAndFields<T>();
+                var toProps = RicochetUtil.GetPropsAndFields<U>();
                 if (predicate != null) {
                     fromProps = fromProps.Where(predicate);
                     toProps = toProps.Where(predicate);
@@ -56,14 +56,14 @@ namespace Example.Ricochet
             }
 
             //You can also get members which you've marked:
-            var nameMembers = KC.Ricochet.Util.GetPropsAndFields<WebModel>(x => x.Markers.Contains("IsAName"));
+            var nameMembers = KC.Ricochet.RicochetUtil.GetPropsAndFields<WebModel>(x => x.Markers.Contains("IsAName"));
             //See class definition below with RicochetMark attribute.
             //This allows you to implement special logic with marked members.
 
             //There's also functionality for creating objects.
             //This is less useful unless you're building your own dependency injection or something:
-            var withAType = KC.Ricochet.Util.GetConstructor<DatabaseModel>(typeof(int)).New(6);
-            var withoutAType = KC.Ricochet.Util.GetConstructor(typeof(DatabaseModel), typeof(int)).New(7);
+            var withAType = KC.Ricochet.RicochetUtil.GetConstructor<DatabaseModel>(typeof(int)).New(6);
+            var withoutAType = KC.Ricochet.RicochetUtil.GetConstructor(typeof(DatabaseModel), typeof(int)).New(7);
         }
     }
 
