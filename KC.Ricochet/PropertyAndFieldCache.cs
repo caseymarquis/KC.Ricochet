@@ -93,9 +93,6 @@ namespace KC.Ricochet {
                         var getExpr = Expression.Lambda<Func<object, object>>(convertedExpr, objectParameterExpr);
                         var setExpr = Expression.Lambda<Action<object, object>>(assignExpr, objectParameterExpr, valueExpr);
 
-                        var getFunc = getExpr.Compile();
-                        var setFunc = setExpr.Compile();
-
                         var newProp = new PropertyAndFieldAccessor {
                             IsProperty = areProperties,
                             IsField = !areProperties,
