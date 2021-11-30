@@ -15,6 +15,8 @@ namespace KC.Ricochet {
         public T New(params object[] args) {
             return instantiator.New<T>(args);
         }
+
+        public ConstructorInfo ConstructorInfo => instantiator.ConstructorInfo;
     }
 
     public class Instantiator {
