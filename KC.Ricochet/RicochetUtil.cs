@@ -5,10 +5,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace KC.Ricochet
-{
-    public static class RicochetUtil
-    {
+namespace KC.Ricochet {
+    public static class RicochetUtil {
         public static IEnumerable<PropertyAndFieldAccessor> GetPropsAndFields<T>(Func<PropertyAndFieldAccessor, bool> predicate = null)
             where T : class {
             return PropertyAndFieldCache.Get<T>(predicate);
@@ -51,6 +49,43 @@ namespace KC.Ricochet
                 throw new Exception("Could not find property name!");
             }
             return name;
+        }
+
+        public static T GetMember<T>(object instance, Func<PropertyAndFieldAccessor, bool> predicate = null) {
+            predicate = predicate ?? (x => true);
+            var props = GetPropsAndFields(instance.GetType(), x => predicate(x) && x.Type == typeof(T));
+            if (!props.Any()) {
+                throw new ArgumentException($"{instance.GetType().Name} does not have a member of type {typeof(T).Name} matching the predicate.");
+            }
+            if (props.Count() > 1) {
+                throw new ArgumentException($"{instance.GetType().Name} has more than one member of type {typeof(T).Name} matching the predicate.");
+            }
+            return (T)props.First().GetVal(instance);
+        }
+
+        public ref struct NestedMemberSelector<T> {
+            public T Result;
+
+            public NestedMemberSelector<U> Where<U>(Func<PropertyAndFieldAccessor, bool> predicate = null) {
+                predicate = predicate ?? (x => true);
+                var props = RicochetUtil.GetPropsAndFields(typeof(T)).Where(x => predicate(x) && x.Type == typeof(U));
+                if (!props.Any()) {
+                    throw new ArgumentException($"{typeof(T).Name} does not have a member of type {typeof(U).Name} matching the predicate.");
+                }
+                if (props.Count() > 1) {
+                    throw new ArgumentException($"{typeof(T).Name} has more than one member of type {typeof(U).Name} matching the predicate.");
+                }
+                var value = props.First().GetVal(Result);
+                return new NestedMemberSelector<U> {
+                    Result = (U)value,
+                };
+            }
+        }
+
+        public static NestedMemberSelector<T> GetNestedMember<T>(T instance) {
+            return new NestedMemberSelector<T>() {
+                Result = instance,
+            };
         }
 
         public static string GetPropertyNameOrNull<T, U>(Expression<Func<T, U>> getProperty) {
