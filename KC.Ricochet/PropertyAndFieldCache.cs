@@ -1,11 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Collections;
 using System.Runtime.CompilerServices;
 
 namespace KC.Ricochet {
@@ -53,9 +51,22 @@ namespace KC.Ricochet {
                 //object obj
                 var objectParameterExpr = Expression.Parameter(typeof(object), "obj");
                 foreach (var memberInfo in memberInfos) {
+                    bool initOnly = false;
                     if (!areProperties) {
                         if (memberInfo.FieldInfo.IsInitOnly) {
-                            continue;
+                            var cn = classType.Name;
+                            var isAnonymousType =
+                                (cn.StartsWith("<>") || cn.StartsWith("VB$"))
+                                && cn.Contains("AnonymousType");
+                            if (!isAnonymousType) {
+                                continue;
+                            }
+                            //We're only supporting anonymous types for InitOnly
+                            //primarily because I don't want to break any existing
+                            //code. It would be pretty easy to add a flag which allowed
+                            //other InitOnly members to be processed, but anonymous types
+                            //are also the only major use case I've personally run into.
+                            initOnly = true;
                         }
                     }
                     try {
@@ -77,7 +88,7 @@ namespace KC.Ricochet {
 
                         //object obj => ((classType)obj).PropertyName
                         //NOTE: We can't use Expression.PropertyOrField as it is not case sensitive, and can confuse properties and fields with identical names.
-                        var propertyOrFieldExpr = areProperties? Expression.Property(typeCastParameterExpr, memberInfo.PropertyInfo) : Expression.Field(typeCastParameterExpr, memberInfo.FieldInfo);
+                        var propertyOrFieldExpr = areProperties ? Expression.Property(typeCastParameterExpr, memberInfo.PropertyInfo) : Expression.Field(typeCastParameterExpr, memberInfo.FieldInfo);
                         //object newValue
                         var valueExpr = Expression.Parameter(typeof(object), "newValue");
 
@@ -85,24 +96,29 @@ namespace KC.Ricochet {
                         var valueCast = Expression.Convert(valueExpr, propertyOrFieldExpr.Type);
 
                         //(object obj, object newValue) => ((classType)obj).PropertyName = (PropertyType)newValue 
-                        var assignExpr = Expression.Assign(propertyOrFieldExpr, valueCast);
+                        var assignExpr = !initOnly ? Expression.Assign(propertyOrFieldExpr, valueCast) : default;
 
                         //object obj => (object) (((classType)obj).PropertyName)
                         var convertedExpr = Expression.Convert(propertyOrFieldExpr, typeof(object));
 
                         var getExpr = Expression.Lambda<Func<object, object>>(convertedExpr, objectParameterExpr);
-                        var setExpr = Expression.Lambda<Action<object, object>>(assignExpr, objectParameterExpr, valueExpr);
+                        var setExpr = !initOnly ? Expression.Lambda<Action<object, object>>(assignExpr, objectParameterExpr, valueExpr) : default;
 
                         var newProp = new PropertyAndFieldAccessor {
                             IsProperty = areProperties,
                             IsField = !areProperties,
                             IsPublic = arePublic,
+                            IsInitOnly = initOnly,
                             Type = tPropertyOrField,
                             TypeInfo = tPropertyOrField.GetTypeInfo(),
                             MemberInfo = memberInfo.Info,
                             ClassDepth = memberInfo.Level,
                             m_Get_From = getExpr.Compile(),
-                            m_Set_On_To = setExpr.Compile(),
+                            m_Set_On_To = initOnly ?
+                                (object obj, object newValue) => {
+                                    throw new FieldAccessException($"The field {tPropertyOrField.Name} is InitOnly and cannot be set.");
+                                }
+                            : setExpr.Compile(),
                         };
 
                         var markAttrs = memberInfo.Info.GetCustomAttributes()
