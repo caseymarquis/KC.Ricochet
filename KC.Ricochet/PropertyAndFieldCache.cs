@@ -204,13 +204,22 @@ namespace KC.Ricochet {
                 else {
                     //Not a string or value type.
                     //Covers every type of collection we care about supporting.
-                    var propIsEnumerable = prop.TypeInfo.ImplementedInterfaces.Where(x => x == typeof(IEnumerable)).FirstOrDefault() != null;
+                    var propIsEnumerable = prop.TypeInfo.IsArray || prop.TypeInfo.ImplementedInterfaces.Where(x => x == typeof(IEnumerable)).FirstOrDefault() != null;
                     if (propIsEnumerable) {
                         //We're some sort of collection.
                         //You'll notice below that we only support IEnumerables with
                         //one generic argument and dictionaries. No current interest
                         //in expanding that.
-                        if (prop.TypeInfo.IsGenericType) {
+                        if (prop.TypeInfo.IsArray) {
+                            var arrayType = prop.TypeInfo.GetElementType();
+                            if (arrayType.GetTypeInfo().IsValueType || arrayType == typeof(string)) {
+                                prop.IsIEnumberableOfValueOrString = true;
+                            }
+                            else {
+                                prop.IsIEnumberableOfClass = true;
+                            }
+                        }
+                        else if (prop.TypeInfo.IsGenericType) {
                             var genericArgs = prop.TypeInfo.GenericTypeArguments;
                             if (genericArgs.Length == 1) {
                                 var arg0 = genericArgs[0];

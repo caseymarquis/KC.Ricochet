@@ -4,19 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace Test.Ricochet
-{
-    public class PropAndFieldTests
-    {
+namespace Test.Ricochet {
+    public class PropAndFieldTests {
         [Fact]
-        public void Main()
-        {
+        public void Main() {
             var a = new SomeClass() {
                 SomeString = "a",
                 SomeInt = 0,
                 SomeFloat = 0.0F,
                 IntList = new List<int>(),
+                IntArray = new int[0],
                 ClassList = new List<SomeClass>(),
+                ClassArray = new SomeClass[0],
                 ValueDict = new Dictionary<int, int>(),
                 ClassDict = new Dictionary<int, SomeClass>(),
                 WeirdDict = new Dictionary<SomeClass, SomeClass>(),
@@ -28,7 +27,9 @@ namespace Test.Ricochet
                 SomeInt = 1,
                 SomeFloat = 1.0F,
                 IntList = new List<int>(),
+                IntArray = new int[0],
                 ClassList = new List<SomeClass>(),
+                ClassArray = new SomeClass[0],
                 ValueDict = new Dictionary<int, int>(),
                 ClassDict = new Dictionary<int, SomeClass>(),
                 WeirdDict = new Dictionary<SomeClass, SomeClass>(),
@@ -51,13 +52,13 @@ namespace Test.Ricochet
             Assert.Equal("c", b.SomeString);
 
             //Test Classification:
-            Assert.Equal(15, members.Count());
-            Assert.Equal(11, members.Where(x => x.IsProperty && x.IsPublic).Count());
+            Assert.Equal(17, members.Count());
+            Assert.Equal(13, members.Where(x => x.IsProperty && x.IsPublic).Count());
             Assert.Equal(2, members.Where(x => x.IsDictionaryOfClass).Count());
-            Assert.Single(members.Where(x => x.IsIEnumberableOfClass));
+            Assert.Equal(2, members.Where(x => x.IsIEnumberableOfClass).Count());
             Assert.Equal(2, members.Where(x => x.IsClass).Count());
             Assert.Single(members.Where(x => x.IsDictionaryOfValueOrString));
-            Assert.Single(members.Where(x => x.IsIEnumberableOfValueOrString));
+            Assert.Equal(2, members.Where(x => x.IsIEnumberableOfValueOrString).Count());
             Assert.Equal(8, members.Where(x => x.IsValueOrString).Count());
 
             foreach (var prop in members) {
@@ -132,12 +133,14 @@ namespace Test.Ricochet
             [ExtendsRicochetMark]
             public float SomeFloat { get; set; }
             public List<int> IntList { get; set; }
+            public int[] IntArray { get; set; }
             public List<SomeClass> ClassList { get; set; }
+            public SomeClass[] ClassArray { get; set; }
             public Dictionary<int, int> ValueDict { get; set; }
             public Dictionary<int, SomeClass> ClassDict { get; set; }
             public Dictionary<SomeClass, SomeClass> WeirdDict { get; set; }
             public SomeClass SomeOtherClass { get; set; }
-            public SomeGenericClass<int> SomeGenericClass {get; set;}
+            public SomeGenericClass<int> SomeGenericClass { get; set; }
 
             private int privateField;
             internal int internalField;
